@@ -63,7 +63,7 @@
         }
 
         th {
-            background: rgba(51, 65, 85, 0.8);
+            background: rgba(62, 93, 139, 0.95);
             backdrop-filter: blur(8px);
             color: #f8fafc;
             font-weight: 600;
@@ -128,6 +128,77 @@
             margin-bottom: 0.25rem;
             white-space: pre-wrap;
             word-wrap: break-word;
+        }
+
+        /* ICM Tooltip Styles */
+        .icm-term {
+            position: relative;
+            cursor: help;
+            color: #60a5fa;
+            font-weight: 600;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            text-decoration-color: rgba(96, 165, 250, 0.5);
+            text-underline-offset: 2px;
+        }
+
+        .icm-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-8px);
+            margin-bottom: 8px;
+            padding: 0.75rem 1rem;
+            min-width: 280px;
+            max-width: 350px;
+            
+            /* Glass effect */
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 
+                        0 8px 10px -6px rgba(0, 0, 0, 0.3);
+            
+            /* Text styling */
+            color: #e2e8f0;
+            font-size: 0.813rem;
+            line-height: 1.5;
+            text-align: center;
+            font-weight: 400;
+            
+            /* Animation */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+            
+            /* Positioning */
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        /* Tooltip arrow */
+        .icm-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: rgba(30, 41, 59, 0.85);
+            filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.2));
+        }
+
+        /* Show tooltip on hover */
+        .icm-term:hover .icm-tooltip {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(-4px);
+        }
+
+        /* Highlight on hover */
+        .icm-term:hover {
+            color: #93c5fd;
         }
     </style>
 </head>
@@ -255,6 +326,37 @@ Protocol - 1%","●ICM launchpad
             return lines;
         }
 
+        // Function to wrap terms with tooltips
+        function wrapTermsWithTooltips(text, launchpadName = '', columnIndex = -1) {
+            // Wrap ICM
+            text = text.replace(/\bICM\b/g, 
+                '<span class="icm-term">ICM<span class="icm-tooltip">Internet Capital Markets - запуски стартапов и utility-проектов</span></span>'
+            );
+            
+            // Wrap CTO for Pumpfun
+            if (launchpadName === '@Pumpfun') {
+                text = text.replace(/\bCTO\b/g, 
+                    '<span class="icm-term">CTO<span class="icm-tooltip">Community Takeover</span></span>'
+                );
+            }
+            
+            // Wrap 10$ for Moonshot in Deploy column (index 1)
+            if (launchpadName === '@Moonshot' && columnIndex === 1) {
+                text = text.replace(/10\$/g, 
+                    '<span class="icm-term">10$<span class="icm-tooltip">Min deposit in app 100$</span></span>'
+                );
+            }
+            
+            // Wrap 0 for Collaterize in Deploy column (index 1)
+            if (launchpadName === '@Collaterize' && columnIndex === 1) {
+                text = text.replace(/^0$/g, 
+                    '<span class="icm-term">0<span class="icm-tooltip">Нужно холдить 100k $COLLAT</span></span>'
+                );
+            }
+            
+            return text;
+        }
+
         // Load data into table
         function loadTable() {
             const rows = parseCSV(csvData);
@@ -265,6 +367,7 @@ Protocol - 1%","●ICM launchpad
                 const row = rows[i];
                 if (row.length === 5 && row[0]) { // Ensure valid row
                     const tr = document.createElement('tr');
+                    const launchpadName = row[0]; // Get launchpad name for context
                     
                     row.forEach((cell, index) => {
                         const td = document.createElement('td');
@@ -278,20 +381,21 @@ Protocol - 1%","●ICM launchpad
                                 const trimmedLine = line.trim();
                                 if (trimmedLine.startsWith('●')) {
                                     currentLi = document.createElement('li');
-                                    currentLi.textContent = trimmedLine.slice(1).trim();
+                                    // Apply tooltips wrapping to the text
+                                    currentLi.innerHTML = wrapTermsWithTooltips(trimmedLine.slice(1).trim(), launchpadName, index);
                                     ul.appendChild(currentLi);
                                 } else if (currentLi && trimmedLine !== '') {
-                                    currentLi.textContent += '\n' + trimmedLine;
+                                    currentLi.innerHTML += '\n' + wrapTermsWithTooltips(trimmedLine, launchpadName, index);
                                 }
                             });
 
                             if (ul.children.length > 0) {
                                 td.appendChild(ul);
                             } else {
-                                td.textContent = cell;
+                                td.innerHTML = wrapTermsWithTooltips(cell, launchpadName, index);
                             }
                         } else {
-                            td.textContent = cell;
+                            td.innerHTML = wrapTermsWithTooltips(cell, launchpadName, index);
                         }
                         
                         tr.appendChild(td);
