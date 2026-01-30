@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Launchpad Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+            min-height: 100vh;
+            padding: 2rem;
+            color: #f8fafc;
+            position: relative;
+            background: url('Untitled design (3).png') center center no-repeat fixed;
+            background-size: cover;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.35);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .table-wrapper {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(12px);
+            border-radius: 1rem;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+            overflow: visible;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            background: rgba(51, 65, 85, 0.8);
+            backdrop-filter: blur(8px);
+            color: #f8fafc;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        th:nth-child(1) { width: 12%; }
+        th:nth-child(2) { width: 12%; }
+        th:nth-child(3) { width: 18%; }
+        th:nth-child(4) { width: 28%; }
+        th:nth-child(5) { width: 30%; }
+
+        tbody tr {
+            border-bottom: 1.5px solid rgb(17, 91, 202);
+            transition: all 0.2s ease-in-out;
+        }
+
+        tbody tr:hover {
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        td {
+            padding: 1rem;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            color: #cbd5e1;
+            vertical-align: top;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        td:first-child {
+            color: #f8fafc;
+            font-weight: 500;
+        }
+
+        /* Accent gradient for special text elements */
+        .gradient-text {
+            background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Styles for lists in table cells */
+        td ul {
+            margin: 0;
+            padding-left: 1.25rem;
+            list-style-type: disc;
+        }
+
+        td li {
+            margin-bottom: 0.25rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="table-wrapper">
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th>Launchpad</th>
+                        <th>Deploy</th>
+                        <th>Fees</th>
+                        <th>Comment</th>
+                        <th>Weaknesses</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Data will be inserted here by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // CSV data embedded in JavaScript
+        const csvData = `Launchpad,Deploy,Fees,Comment,Weaknesses
+@Pumpfun,0.015 SOL,"Creator - 0.3 - 0.9%
+Protocol - 0.25 - 0.95%
+Full - pump.fun/docs/fees",●CTO может получить право на creator fees через заявку,●Слабая настройка распределения комиссий
+@BagsApp,0.025 SOL,"Creator - 0.3%
+Protocol - 1%","●Гибкая настройка разделения комиссий на:
+Профили в Х, кошельки, Kick, Github, AMM, Топ 100 холдеров
+●Упор на разработчиков и весомых ребят(Matt Furie, Beast etc.)
+
+●Основная страница bags.fm полностью посвящена тому как много 
+заработали те, кто склеймил фисы и поддержал токен.","●Разработчики клеймят фисы и не участвуют в проекте
+ или бросают как только объемы падают"
+@bonkfun,0.00015,"Creator - 0 - 0.5%
+Protocol - 0.3%",●Самые низкие комиссии,●Нет настройки распределения комиссий
+@orynth,0,"Creator - 1%
+Protocol - 1%",●Product hunt для веб3,"●Низкое качество ручной модерации проектов
+●Нет настройки распределения комиссий"
+@believeapp,0,"Creator - 1.4%
+Protocol - 0.6%","●Первый твит-деплоер
+●Одни из первых пытались сделать то что сейчас называют ICM
+●Anti-sniping","●Фаундер игнорил и обманывал комьюнити
+●Нет настройки распределения комиссий"
+@anoncoinit,0,Protocol - 1%,"●Возможность перекупить токен если он не мигрировал 7 дней
+●Лаунч только через коннект твиттера, можно показать свой KOL score не раскрывая аккаунт","Нет настройки распределения комиссий
+●Нет ревардов креейтору"
+@trendsdotfun,0.02 SOL,"Creator - 1%
+Protocol - 1%",●Токенизация твитов и аккаунтов,
+@Collaterize,0,"Creator - 0.2%
+Protocol - 1.8%",●RWA launchpad,"●Низкое качество проектов, несколько скамов поддержались командой
+●Нет верификации владения"
+@jup_studio,0.04 SOL,"Creator - 0.5 - 1%
+Protocol - 0.5 - 1%","●Anti-sniping
+●Vesting ","●Нет настройки распределения комиссий
+"
+@daosdotfun,0.015 SOL,Protocol - 1%,"●DAO managed fund
+●Alliance DAO
+●Лаунч ai16z ","●Нет настройки распределения комиссий
+●Нет ревардов креейтору
+●Запуск DAO только через заявку"
+@Moonshot,"10$
+","Creator - 0.25%
+Protocol - 0.25%
+Trade in app
+<250$ - 2.5%
+>250$ - 1%","●Fiat on-ramp
+●USA friendly","●Большие комиссии для маленьких сумм в приложении
+●Нет веб платформы
+●Нет настройки распределения комиссий"
+@LaunchOnSoar,0.015 SOL,"Creator - 1%
+Protocol - 1%","●ICM launchpad 
+●Собственный токен-стандарт - продажа доли участия(токена) без продажи акций
+●Curated лаунчи с KYB
+●Anti-sniping","●Интерес только к curated запускам
+●Нет настройки распределения комиссий"
+@americadotfun,$200,Protocol - 1%,"
+●Тикер можно занять только один раз","●WLFI кабал без органики, стреляли только 2-3 лаунча от самой команды
+●Нет настройки распределения комиссий
+●Нет ревардов креейтору"
+@revshare_app,0.06 - 0.2 SOL,Custom fees,"●Гибкая настройка комиссий:
+1-10% для virtual curve и возможность кликом врубить разные режимы
+распределения(Джекпот топ 10 холдерам, лотерея, разделение на всех холдеров)
+●Фисы на Х, Kick, Twitch",`;
+
+        // Parse CSV data
+        function parseCSV(csv) {
+            const lines = [];
+            let currentLine = [];
+            let currentField = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < csv.length; i++) {
+                const char = csv[i];
+                const nextChar = csv[i + 1];
+
+                if (char === '"') {
+                    if (inQuotes && nextChar === '"') {
+                        currentField += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    currentLine.push(currentField);
+                    currentField = '';
+                } else if (char === '\n' && !inQuotes) {
+                    currentLine.push(currentField);
+                    lines.push(currentLine);
+                    currentLine = [];
+                    currentField = '';
+                } else {
+                    currentField += char;
+                }
+            }
+
+            if (currentField || currentLine.length > 0) {
+                currentLine.push(currentField);
+                lines.push(currentLine);
+            }
+
+            return lines;
+        }
+
+        // Load data into table
+        function loadTable() {
+            const rows = parseCSV(csvData);
+            const tbody = document.getElementById('tableBody');
+            
+            // Skip header row (index 0)
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                if (row.length === 5 && row[0]) { // Ensure valid row
+                    const tr = document.createElement('tr');
+                    
+                    row.forEach((cell, index) => {
+                        const td = document.createElement('td');
+                        
+                        if (index === 3 || index === 4) { // For Comment and Weaknesses columns
+                            const lines = cell.split('\n');
+                            const ul = document.createElement('ul');
+                            let currentLi = null;
+
+                            lines.forEach(line => {
+                                const trimmedLine = line.trim();
+                                if (trimmedLine.startsWith('●')) {
+                                    currentLi = document.createElement('li');
+                                    currentLi.textContent = trimmedLine.slice(1).trim();
+                                    ul.appendChild(currentLi);
+                                } else if (currentLi && trimmedLine !== '') {
+                                    currentLi.textContent += '\n' + trimmedLine;
+                                }
+                            });
+
+                            if (ul.children.length > 0) {
+                                td.appendChild(ul);
+                            } else {
+                                td.textContent = cell;
+                            }
+                        } else {
+                            td.textContent = cell;
+                        }
+                        
+                        tr.appendChild(td);
+                    });
+                    
+                    tbody.appendChild(tr);
+                }
+            }
+        }
+
+        // Initialize table on page load
+        document.addEventListener('DOMContentLoaded', loadTable);
+    </script>
+</body>
+</html>
